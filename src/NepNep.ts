@@ -17,7 +17,7 @@ import {
 
 import { NepNepParser } from './NepNepParser'
 
-const BASE_VERSION = '3.0.0'
+const BASE_VERSION = '3.0.1'
 export const getExportVersion = (EXTENSION_VERSION: string): string => {
     return BASE_VERSION.split('.').map((x, index) => Number(x) + Number(EXTENSION_VERSION.split('.')[index])).join('.')
 }
@@ -29,7 +29,7 @@ export abstract class NepNep implements SearchResultsProviding, MangaProviding, 
     constructor(private cheerio: CheerioAPI) { }
 
     requestManager = App.createRequestManager({
-        requestsPerSecond: 0.5,
+        // requestsPerSecond: 0.5,
         requestTimeout: 15000,
         interceptor: {
             interceptRequest: async (request: Request): Promise<Request> => {
