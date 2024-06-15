@@ -29,6 +29,7 @@ export abstract class NepNep implements SearchResultsProviding, MangaProviding, 
     constructor(private cheerio: CheerioAPI) { }
 
     requestManager = App.createRequestManager({
+        // use the default requestsPerSecond, 4r/s
         // requestsPerSecond: 0.5,
         requestTimeout: 15000,
         interceptor: {
