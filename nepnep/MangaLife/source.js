@@ -1464,7 +1464,7 @@ exports.MangaLife = MangaLife;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.NepNep = exports.getExportVersion = void 0;
 const NepNepParser_1 = require("./NepNepParser");
-const BASE_VERSION = '3.0.0';
+const BASE_VERSION = '3.0.1';
 const getExportVersion = (EXTENSION_VERSION) => {
     return BASE_VERSION.split('.').map((x, index) => Number(x) + Number(EXTENSION_VERSION.split('.')[index])).join('.');
 };
@@ -1474,7 +1474,8 @@ class NepNep {
         this.cheerio = cheerio;
         this.parser = new NepNepParser_1.NepNepParser();
         this.requestManager = App.createRequestManager({
-            requestsPerSecond: 0.5,
+            // use the default requestsPerSecond, 4r/s
+            // requestsPerSecond: 0.5,
             requestTimeout: 15000,
             interceptor: {
                 interceptRequest: async (request) => {
