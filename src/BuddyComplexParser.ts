@@ -162,7 +162,7 @@ export class BuddyComplexParser {
         return tagSections
     }
 
-    parseHomeSections($: CheerioStatic, sections: HomeSection[], sectionCallback: (section: HomeSection) => void): void {
+    parseHomeSections($: CheerioStatic, sections: HomeSection[], sectionCallback: (section: HomeSection) => void, languages: string[] = ['English']): void {
         for (const section of sections) {
             // Hot Updates
             if (section.id == 'hot_updates') {
@@ -273,7 +273,7 @@ export class BuddyComplexParser {
         }
     }
 
-    parseViewMore = ($: CheerioStatic): PartialSourceManga[] => {
+    parseViewMore = ($: CheerioStatic, languages: string[] = ['English']): PartialSourceManga[] => {
         const mangas: PartialSourceManga[] = []
         const collectedIds: string[] = []
 
