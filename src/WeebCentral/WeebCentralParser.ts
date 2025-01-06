@@ -70,14 +70,14 @@ export class Parser {
         })
     }
 
-    parseChapters($: cheerio.Root, mangaId: string, source: any): Chapter[] {
+    parseChapters($: cheerio.Root, mangaId: string): Chapter[] {
         const chapters: Chapter[] = []
         const arrChapters = $('a.flex.items-center').toArray()
         let backupChapNum = 0
         for (const chapterObj of arrChapters) {
             const id = $(chapterObj).attr('href') ?? ''
 
-            const time = new Date($('time', chapterObj).text().trim() ?? '')
+            const time = new Date($('time', chapterObj).attr('datetime') ?? '')
             const name =
                 $('span.grow.flex.gap-2 span', chapterObj)
                     .first()
@@ -100,6 +100,11 @@ export class Parser {
                     time,
                     langCode: 'en',
                 })
+            )
+        }
+        if (chapters.length == 0) {
+            throw new Error(
+                `Couldn't find any chapters for mangaId: ${mangaId}`
             )
         }
         return chapters

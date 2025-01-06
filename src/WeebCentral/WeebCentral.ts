@@ -28,7 +28,7 @@ const BASE_DOMAIN = 'https://weebcentral.com'
 export const WeebCentralInfo: SourceInfo = {
     version: '1.0.0',
     name: 'WeebCentral',
-    description: 'Extension that pulls manga from WeebCentral WeebCentral.',
+    description: 'Extension that pulls manga from WeebCentral.',
     author: 'Gabe',
     authorWebsite: 'http://github.com/GabrielCWT',
     icon: 'icon.ico',
@@ -107,7 +107,7 @@ export class WeebCentral
         const response = await this.requestManager.schedule(request, this.RETRY)
         this.checkResponseError(response)
         const $ = this.cheerio.load(response.data as string)
-        return this.parser.parseChapters($, mangaId, this)
+        return this.parser.parseChapters($, mangaId)
     }
 
     async getChapterDetails(
