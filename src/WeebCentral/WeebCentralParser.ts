@@ -73,7 +73,6 @@ export class Parser {
     parseChapters($: cheerio.Root, mangaId: string): Chapter[] {
         const chapters: Chapter[] = []
         const arrChapters = $('a.flex.items-center').toArray()
-        let backupChapNum = 0
         for (const chapterObj of arrChapters) {
             const chapterId: string =
                 $(chapterObj)
@@ -93,8 +92,6 @@ export class Parser {
                     .trim()
                     .replace(/[^0-9.]/g, '')
             )
-            if (chapNum) backupChapNum = chapNum
-            else chapNum = ++backupChapNum
             chapters.push(
                 App.createChapter({
                     id: chapterId,
