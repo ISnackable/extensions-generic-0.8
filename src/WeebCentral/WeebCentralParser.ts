@@ -225,10 +225,9 @@ export class Parser {
         }
         recommendationSection.items = recommendation
         sectionCallback(recommendationSection)
-
         for (const hotObj of $(
             'article.flex.gap-4',
-            'section.grid.grid-cols-1'
+            'section.bg-base-200.max-w-7xl'
         ).toArray()) {
             const id =
                 $('a', hotObj)
