@@ -50,7 +50,7 @@ export class Parser {
             $('strong:contains("Tags(s)")').siblings()
         ).toArray()) {
             const genre = $(genreObj).text().trim()
-            const id = genre
+            const id = encodeURI(genre)
             genres.push(App.createTag({ id, label: genre }))
         }
         const tagSections: TagSection[] = [
