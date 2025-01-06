@@ -178,16 +178,16 @@ export class Parser {
         sectionCallback: (section: HomeSection) => void
     ): void {
         const trendingSection = App.createHomeSection({
-            id: '0',
+            id: 'trending',
             title: 'Trending Mangas',
             type: HomeSectionType.featured,
             containsMoreItems: false,
         })
         const recentSection = App.createHomeSection({
-            id: '1',
+            id: 'recent',
             title: 'Recently Updated',
             type: HomeSectionType.singleRowNormal,
-            containsMoreItems: false,
+            containsMoreItems: true,
         })
 
         const trending: PartialSourceManga[] = []
@@ -235,6 +235,43 @@ export class Parser {
         }
         recentSection.items = recent
         sectionCallback(recentSection)
+    }
+
+    parseViewMore($: cheerio.Root): PartialSourceManga[] {
+        const manga: PartialSourceManga[] = []
+        const collectedIds: string[] = []
+        for (const obj of $('article').toArray()) {
+            const image: string = $('source', obj).attr('srcset') ?? ''
+            const title: string = $('img', obj).attr('alt') ?? ''
+            const id =
+                $('a', obj)
+                    .first()
+                    .attr('href')
+                    ?.replace(/\/$/, '')
+                    ?.split('/')
+                    .slice(-2)[0] ?? ''
+            const getChapter = $('div.opacity-70', obj).first().text().trim()
+
+            const chapNumRegex = getChapter.match(/(\d+\.?\d?)+/)
+            let chapNum = 0
+            if (chapNumRegex && chapNumRegex[1])
+                chapNum = Number(chapNumRegex[1])
+
+            const subtitle = chapNum ? 'Chapter ' + chapNum : 'Chapter N/A'
+
+            if (!id || !title || collectedIds.includes(id)) continue
+            manga.push(
+                App.createPartialSourceManga({
+                    image: image,
+                    title: this.decodeHTMLEntity(title),
+                    mangaId: id,
+                    subtitle: this.decodeHTMLEntity(subtitle),
+                })
+            )
+            collectedIds.push(id)
+        }
+
+        return manga
     }
 
     encodeText(str: string): string {

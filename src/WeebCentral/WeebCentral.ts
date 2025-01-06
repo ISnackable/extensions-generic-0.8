@@ -115,7 +115,7 @@ export class WeebCentral
         chapterId: string
     ): Promise<ChapterDetails> {
         const request = App.createRequest({
-            url: `${this.baseUrl}/chapters/${chapterId}/images?is_prev=False&reading_style=long_strip`,
+            url: `${this.baseUrl}/chapters/${chapterId}/images?reading_style=long_strip`,
             method: 'GET',
         })
         const response = await this.requestManager.schedule(request, this.RETRY)
@@ -139,13 +139,15 @@ export class WeebCentral
         query: SearchRequest,
         metadata: any
     ): Promise<PagedResults> {
+        const LIMIT = 32
+        const offset = metadata?.offset ?? 0
         let searchParams = ''
         searchParams = searchParams.concat(`&text=${query.title ?? ''}`)
         for (const tag of query.includedTags) {
             searchParams = searchParams.concat(`&included_tag=${tag.id}`)
         }
         const request = App.createRequest({
-            url: `${this.baseUrl}/search/data?author=&sort=Best%20Match&order=Ascending&display_mode=Full%20Display${searchParams}`,
+            url: `${this.baseUrl}/search/data?limit=${LIMIT}&offset=${offset}&sort=Best%20Match&order=Ascending&display_mode=Full%20Display${searchParams}`,
             method: 'GET',
         })
         const response = await this.requestManager.schedule(request, this.RETRY)
@@ -154,6 +156,7 @@ export class WeebCentral
         const results = await this.parser.parseSearchResults($)
         return App.createPagedResults({
             results,
+            metadata: { offset: offset + LIMIT },
         })
     }
 
@@ -174,10 +177,25 @@ export class WeebCentral
         homepageSectionId: string,
         metadata: any
     ): Promise<PagedResults> {
-        const manga: PartialSourceManga[] = []
+        const page: number = metadata?.page ?? 1
+        let param = ''
+        switch (homepageSectionId) {
+            case 'recent':
+                param = `latest-updates/${page}`
+                break
+            default:
+                throw new Error('Section id not supported')
+        }
+        const request = App.createRequest({
+            url: `${this.baseUrl}/${param}`,
+            method: 'GET',
+        })
+        const response = await this.requestManager.schedule(request, this.RETRY)
+        const $ = this.cheerio.load(response.data as string)
+        const manga = this.parser.parseViewMore($)
         return App.createPagedResults({
             results: manga,
-            metadata,
+            metadata: { ...metadata, page: page + 1 },
         })
     }
     /**
