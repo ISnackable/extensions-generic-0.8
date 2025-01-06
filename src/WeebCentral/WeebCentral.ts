@@ -14,11 +14,8 @@ import {
     MangaProviding,
     ChapterProviding,
     HomePageSectionsProviding,
-    PartialSourceManga,
     SourceIntents,
-    RequestManager,
     TagSection,
-    HomeSectionType,
 } from '@paperback/types'
 
 import { Parser } from './WeebCentralParser'

@@ -177,12 +177,19 @@ export class Parser {
         $: any,
         sectionCallback: (section: HomeSection) => void
     ): void {
-        const trendingSection = App.createHomeSection({
-            id: 'trending',
-            title: 'Trending Mangas',
+        const recommendationSection = App.createHomeSection({
+            id: 'recommendation',
+            title: 'Recommended Mangas',
             type: HomeSectionType.featured,
             containsMoreItems: false,
         })
+        const hotSection = App.createHomeSection({
+            id: 'hot',
+            title: 'Hot Updates',
+            type: HomeSectionType.singleRowNormal,
+            containsMoreItems: false,
+        })
+
         const recentSection = App.createHomeSection({
             id: 'recent',
             title: 'Recently Updated',
@@ -190,17 +197,19 @@ export class Parser {
             containsMoreItems: true,
         })
 
-        const trending: PartialSourceManga[] = []
+        const recommendation: PartialSourceManga[] = []
+        const hot: PartialSourceManga[] = []
         const recent: PartialSourceManga[] = []
 
-        for (const trendingObj of $('glide__slide').toArray()) {
-            const id = $('a', trendingObj).attr('href') ?? ''
-            const title = $('.text-white', trendingObj).text().trim() ?? ''
+        for (const recommendationObj of $('glide__slide').toArray()) {
+            const id = $('a', recommendationObj).attr('href') ?? ''
+            const title =
+                $('.text-white', recommendationObj).text().trim() ?? ''
             const image =
-                $('img', trendingObj).attr('src') ??
-                $('img', trendingObj).attr('data-src') ??
+                $('img', recommendationObj).attr('src') ??
+                $('img', recommendationObj).attr('data-src') ??
                 ''
-            trending.push(
+            recommendation.push(
                 App.createPartialSourceManga({
                     image,
                     title: this.decodeHTMLEntity(title),
@@ -209,8 +218,35 @@ export class Parser {
                 })
             )
         }
-        trendingSection.items = trending
-        sectionCallback(trendingSection)
+        recommendationSection.items = recommendation
+        sectionCallback(recommendationSection)
+
+        for (const hotObj of $(
+            'article.flex.gap-4',
+            'section.max-w-7xl.w-full.mb-4'
+        ).toArray()) {
+            const id =
+                $('a', hotObj)
+                    .first()
+                    .attr('href')
+                    ?.replace(/\/$/, '')
+                    ?.split('/')
+                    .slice(-2)[0] ?? ''
+            const title =
+                $('div.font-semibold', hotObj).first().text().trim() ?? ''
+            const image = $('source', hotObj).first().attr('srcset') ?? ''
+            const subtitle = $('span', hotObj).last().text().trim() ?? ''
+            hot.push(
+                App.createPartialSourceManga({
+                    image,
+                    title: this.decodeHTMLEntity(title),
+                    mangaId: id,
+                    subtitle: this.decodeHTMLEntity(subtitle),
+                })
+            )
+        }
+        hotSection.items = hot
+        sectionCallback(hotSection)
 
         for (const recentObj of $(
             'article',
