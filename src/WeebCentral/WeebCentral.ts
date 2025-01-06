@@ -23,7 +23,7 @@ import { Parser } from './WeebCentralParser'
 const BASE_DOMAIN = 'https://weebcentral.com'
 
 export const WeebCentralInfo: SourceInfo = {
-    version: '1.0.0',
+    version: '1.0.1',
     name: 'WeebCentral',
     description: 'Extension that pulls manga from WeebCentral.',
     author: 'Gabe',

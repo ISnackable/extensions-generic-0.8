@@ -75,17 +75,12 @@ export class Parser {
         })
     }
 
-    /*
-        Chapters are given 0 and then uses the sorting index. This is because
-        some mangas have S1 Ch6 i.e. Tower of God. This is to ensure that the
-        chapters are sorted correctly.
-
-        Note: If there are missing chapters then the chapter numbering will be wrong.
-        Would be nice to find a better solution.
-    */
     parseChapters($: cheerio.Root, mangaId: string): Chapter[] {
+        const floatRegex = /(\d+\.\d+|\d+)/g
         const chapters: Chapter[] = []
         const arrChapters = $('a.flex.items-center').toArray()
+        const types: Record<string, number> = {}
+        let currTypeId = 0
         let sortingIndex = 0
         for (const chapterObj of arrChapters) {
             const chapterId: string =
@@ -103,13 +98,25 @@ export class Parser {
                 .first()
                 .text()
                 .trim()
-            sortingIndex--
 
+            let chapNum = 0
+            let chapType = ''
+            const matches = chapName.match(floatRegex)
+            if (matches && matches[matches.length - 1]) {
+                chapNum = parseFloat(matches[matches.length - 1] ?? '0')
+                chapType = chapName
+                    .slice(0, -matches[matches.length - 1]!.length)
+                    .trim()
+            }
+            sortingIndex--
+            if (!(chapType in types)) {
+                types[chapType] = currTypeId--
+            }
             chapters.push(
                 App.createChapter({
                     id: chapterId,
                     name: chapName,
-                    chapNum: 0,
+                    chapNum,
                     time,
                     sortingIndex,
                     langCode: 'en',
@@ -121,9 +128,17 @@ export class Parser {
                 `Couldn't find any chapters for mangaId: ${mangaId}`
             )
         }
+        const totalTypes = Object.keys(types).length
         return chapters.map((chapter) => {
+            chapter.volume = 0
+            const matches = chapter.name.match(floatRegex)
+            if (matches) {
+                let chapType = chapter.name
+                    .slice(0, -matches[matches.length - 1]!.length)
+                    .trim()
+                chapter.volume = totalTypes + types[chapType]!
+            }
             chapter.sortingIndex += chapters.length
-            chapter.chapNum = chapter.sortingIndex
             return App.createChapter(chapter)
         })
     }
