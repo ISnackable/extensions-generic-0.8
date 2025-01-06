@@ -161,7 +161,8 @@ export class Parser {
                     ?.split('/')[0] ?? ''
             if (id == '' || typeof id != 'string')
                 throw new Error('Id is empty')
-            const title = $('a.link.link-hover', item).text().trim() ?? ''
+            const title =
+                $('a.link.link-hover', item).first().text().trim() ?? ''
             const image =
                 $('img', item).attr('src') ??
                 $('img', item).attr('data-src') ??
@@ -323,6 +324,10 @@ export class Parser {
             const num = parseInt(numStr, 10)
             return String.fromCharCode(num)
         })
+    }
+
+    isLastPage($: cheerio.Root): boolean {
+        return $('span:contains("View More Results...")').toArray().length == 0
     }
 
     protected decodeHTMLEntity(str: string): string {

@@ -160,9 +160,12 @@ export class WeebCentral
         this.checkResponseError(response)
         const $ = this.cheerio.load(response.data as string)
         const results = await this.parser.parseSearchResults($)
+        metadata = this.parser.isLastPage($)
+            ? undefined
+            : { offset: offset + LIMIT }
         return App.createPagedResults({
             results,
-            metadata: { offset: offset + LIMIT },
+            metadata,
         })
     }
 
