@@ -28,7 +28,7 @@ export const WeebCentralInfo: SourceInfo = {
     description: 'Extension that pulls manga from WeebCentral.',
     author: 'Gabe',
     authorWebsite: 'http://github.com/GabrielCWT',
-    icon: 'icon.ico',
+    icon: 'icon.png',
     contentRating: ContentRating.EVERYONE,
     websiteBaseURL: BASE_DOMAIN,
     sourceTags: [
