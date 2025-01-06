@@ -75,14 +75,17 @@ export class Parser {
         const arrChapters = $('a.flex.items-center').toArray()
         let backupChapNum = 0
         for (const chapterObj of arrChapters) {
-            const id = $(chapterObj).attr('href') ?? ''
+            const chapterId: string =
+                $(chapterObj)
+                    .attr('href')
+                    ?.replace(/\/$/, '')
+                    ?.split('/')
+                    .pop() ?? ''
+            if (!chapterId) continue
 
-            const time = new Date($('time', chapterObj).attr('datetime') ?? '')
-            const name =
-                $('span.grow.flex.gap-2 span', chapterObj)
-                    .first()
-                    .text()
-                    .trim() ?? ''
+            const time = new Date(
+                $('time.opacity-50', chapterObj).attr('datetime') ?? ''
+            )
             let chapNum = parseFloat(
                 $('span.grow.flex.gap-2 span', chapterObj)
                     .first()
@@ -94,8 +97,8 @@ export class Parser {
             else chapNum = ++backupChapNum
             chapters.push(
                 App.createChapter({
-                    id,
-                    name,
+                    id: chapterId,
+                    name: `Chapter ${chapNum}`,
                     chapNum,
                     time,
                     langCode: 'en',
@@ -110,24 +113,25 @@ export class Parser {
         return chapters
     }
 
-    parseChapterDetails(
+    parseChapterDetails = (
         $: cheerio.Root,
         mangaId: string,
-        id: string
-    ): ChapterDetails {
+        chapterId: string
+    ): ChapterDetails => {
         const pages: string[] = []
-
-        for (const img of $('img', 'section.pb-4.cursor-pointer').toArray()) {
-            let page = $(img).attr('src') ?? ''
-            if (!page) page = $(img).attr('data-src') ?? ''
-            if (!page) continue
-            pages.push(page)
+        for (const img of $('img', 'section.cursor-pointer').toArray()) {
+            let image = $(img).attr('src') ?? ''
+            if (!image) image = $(img).attr('data-src') ?? ''
+            if (!image) continue
+            pages.push(image)
         }
-        return App.createChapterDetails({
-            id,
-            mangaId,
-            pages,
+
+        const chapterDetails = App.createChapterDetails({
+            id: chapterId,
+            mangaId: mangaId,
+            pages: pages,
         })
+        return chapterDetails
     }
 
     parseTags($: cheerio.Root): TagSection[] {

@@ -112,16 +112,16 @@ export class WeebCentral
 
     async getChapterDetails(
         mangaId: string,
-        chapterUrl: string
+        chapterId: string
     ): Promise<ChapterDetails> {
         const request = App.createRequest({
-            url: chapterUrl,
+            url: `${this.baseUrl}/chapters/${chapterId}/images?is_prev=False&reading_style=long_strip`,
             method: 'GET',
         })
         const response = await this.requestManager.schedule(request, this.RETRY)
         this.checkResponseError(response)
         const $ = this.cheerio.load(response.data as string)
-        return this.parser.parseChapterDetails($, mangaId, chapterUrl)
+        return this.parser.parseChapterDetails($, mangaId, chapterId)
     }
 
     async getSearchTags(): Promise<TagSection[]> {
