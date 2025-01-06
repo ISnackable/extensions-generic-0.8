@@ -18,22 +18,27 @@ export class Parser {
         const description = this.decodeHTMLEntity(
             $('.whitespace-pre-wrap').text().trim()
         )
-        const author = $('strong:contains("Author")').text().trim()
-        const parsedStatus = $('a', $('strong:contains("Status")').siblings())
-            .text()
-            .trim()
+        const authors: string[] = []
+        for (const authorObj of $('strong:contains("Author")')
+            .siblings()
+            .toArray()) {
+            const author = $('a', authorObj).text().trim()
+            authors.push(author)
+        }
+        const author = authors.join(', ')
+        const parsedStatus = $('strong:contains("Status")').next().text().trim()
         let status: string
         switch (parsedStatus) {
-            case 'publishing':
+            case 'Ongoing':
                 status = 'Ongoing'
                 break
-            case 'finished':
+            case 'Complete':
                 status = 'Completed'
                 break
-            case 'discontinued':
+            case 'Canceled':
                 status = 'Dropped'
                 break
-            case 'on hiatus':
+            case 'Hiatus':
                 status = 'Hiatus'
                 break
             default:
