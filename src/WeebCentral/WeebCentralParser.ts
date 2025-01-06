@@ -228,7 +228,7 @@ export class Parser {
 
         for (const hotObj of $(
             'article.flex.gap-4',
-            'section.max-w-7xl.w-full.mb-4'
+            'section.grid.grid-cols-1'
         ).toArray()) {
             const id =
                 $('a', hotObj)
@@ -257,14 +257,18 @@ export class Parser {
             'article',
             'section.cols-span-1.rounded'
         ).toArray()) {
-            const id = $('a.min-w-0', recentObj).attr('href') ?? ''
+            const id =
+                $('a.aspect-square', recentObj)
+                    .attr('href')
+                    ?.replace(/\/$/, '')
+                    ?.split('/')
+                    .slice(-2)[0] ?? ''
             const title = $('span', recentObj).first().text().trim() ?? ''
             const image =
                 $('a img', recentObj).attr('src') ??
                 $('a img', recentObj).attr('data-src') ??
                 ''
-            const subtitle =
-                $('span.opacity-70', recentObj).first().text().trim() ?? ''
+            const subtitle = $('span', recentObj).last().text().trim() ?? ''
             recent.push(
                 App.createPartialSourceManga({
                     image,
