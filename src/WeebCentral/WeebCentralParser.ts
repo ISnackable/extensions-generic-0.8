@@ -291,7 +291,7 @@ export class Parser {
                     ?.replace(/\/$/, '')
                     ?.split('/')
                     .slice(-2)[0] ?? ''
-            const title = $('span', recentObj).first().text().trim() ?? ''
+            const title = $('div.font-semibold', recentObj).first().text().trim() ?? ''
             const image =
                 $('a img', recentObj).attr('src') ??
                 $('a img', recentObj).attr('data-src') ??
