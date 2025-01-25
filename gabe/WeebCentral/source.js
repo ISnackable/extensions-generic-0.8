@@ -1440,7 +1440,7 @@ const types_1 = require("@paperback/types");
 const WeebCentralParser_1 = require("./WeebCentralParser");
 const BASE_DOMAIN = 'https://weebcentral.com';
 exports.WeebCentralInfo = {
-    version: '1.0.1',
+    version: '1.0.2',
     name: 'WeebCentral',
     description: 'Extension that pulls manga from WeebCentral.',
     author: 'Gabe',
@@ -1882,7 +1882,7 @@ class Parser {
                 ?.replace(/\/$/, '')
                 ?.split('/')
                 .slice(-2)[0] ?? '';
-            const title = $('span', recentObj).first().text().trim() ?? '';
+            const title = $('div.font-semibold', recentObj).first().text().trim() ?? '';
             const image = $('a img', recentObj).attr('src') ??
                 $('a img', recentObj).attr('data-src') ??
                 '';
