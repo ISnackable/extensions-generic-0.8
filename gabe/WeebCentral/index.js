@@ -1440,7 +1440,7 @@ const types_1 = require("@paperback/types");
 const WeebCentralParser_1 = require("./WeebCentralParser");
 const BASE_DOMAIN = 'https://weebcentral.com';
 exports.WeebCentralInfo = {
-    version: '1.0.2',
+    version: '1.0.7',
     name: 'WeebCentral',
     description: 'Extension that pulls manga from WeebCentral.',
     author: 'Gabe',
@@ -1463,8 +1463,7 @@ class WeebCentral {
         this.cheerio = cheerio;
         this.baseUrl = BASE_DOMAIN;
         this.requestManager = App.createRequestManager({
-            // use the default requestsPerSecond, 4r/s
-            // requestsPerSecond: 5,
+            requestsPerSecond: 5,
             requestTimeout: 20000,
             interceptor: {
                 interceptRequest: async (request) => {
@@ -1535,17 +1534,15 @@ class WeebCentral {
         const LIMIT = 32;
         const offset = metadata?.offset ?? 0;
         let searchParams = '';
-        // Regular search
+        // Title search
         if (query.title) {
             searchParams = searchParams.concat(encodeURI(`&text=${query.title ?? ''}`));
         }
         // Tag search
-        else {
-            for (const tag of query.includedTags) {
-                searchParams = searchParams.concat(`&included_tag=${tag.id}`);
-            }
-            searchParams.concat(`limit=${LIMIT}&offset=${offset}`);
+        for (const tag of query.includedTags) {
+            searchParams = searchParams.concat(`&included_tag=${tag.id}`);
         }
+        searchParams = searchParams.concat(`&limit=${LIMIT}&offset=${offset}`);
         const request = App.createRequest({
             url: `${this.baseUrl}/search/data?sort=Best%20Match&order=Ascending&display_mode=Full%20Display${searchParams}`,
             method: 'GET',
@@ -1578,6 +1575,14 @@ class WeebCentral {
         switch (homepageSectionId) {
             case 'recent':
                 param = `latest-updates/${page}`;
+                metadata = {
+                    ...metadata,
+                    page: page + 1,
+                };
+                break;
+            case 'hot':
+                param = `hot-updates`;
+                metadata = undefined;
                 break;
             default:
                 throw new Error('Section id not supported');
@@ -1588,10 +1593,10 @@ class WeebCentral {
         });
         const response = await this.requestManager.schedule(request, this.RETRY);
         const $ = this.cheerio.load(response.data);
-        const manga = this.parser.parseViewMore($);
+        const manga = this.parser.parseViewMore($, homepageSectionId);
         return App.createPagedResults({
             results: manga,
-            metadata: { ...metadata, page: page + 1 },
+            metadata,
         });
     }
     /**
@@ -1717,7 +1722,7 @@ class Parser {
         return App.createSourceManga({
             id: mangaId,
             mangaInfo: App.createMangaInfo({
-                titles: [title],
+                titles: [this.decodeHTMLEntity(title)],
                 image,
                 rating: 0,
                 status,
@@ -1824,14 +1829,14 @@ class Parser {
         const recommendationSection = App.createHomeSection({
             id: 'recommendation',
             title: 'Recommended Mangas',
-            type: types_1.HomeSectionType.featured,
+            type: types_1.HomeSectionType.singleRowNormal,
             containsMoreItems: false,
         });
         const hotSection = App.createHomeSection({
             id: 'hot',
             title: 'Hot Updates',
             type: types_1.HomeSectionType.singleRowNormal,
-            containsMoreItems: false,
+            containsMoreItems: true,
         });
         const recentSection = App.createHomeSection({
             id: 'recent',
@@ -1842,21 +1847,6 @@ class Parser {
         const recommendation = [];
         const hot = [];
         const recent = [];
-        for (const recommendationObj of $('glide__slide').toArray()) {
-            const id = $('a', recommendationObj).attr('href') ?? '';
-            const title = $('.text-white', recommendationObj).text().trim() ?? '';
-            const image = $('img', recommendationObj).attr('src') ??
-                $('img', recommendationObj).attr('data-src') ??
-                '';
-            recommendation.push(App.createPartialSourceManga({
-                image,
-                title: this.decodeHTMLEntity(title),
-                mangaId: id,
-                subtitle: '',
-            }));
-        }
-        recommendationSection.items = recommendation;
-        sectionCallback(recommendationSection);
         for (const hotObj of $('article.flex.gap-4', 'section.bg-base-200.max-w-7xl').toArray()) {
             const id = $('a', hotObj)
                 .first()
@@ -1882,7 +1872,7 @@ class Parser {
                 ?.replace(/\/$/, '')
                 ?.split('/')
                 .slice(-2)[0] ?? '';
-            const title = $('div.font-semibold', recentObj).first().text().trim() ?? '';
+            const title = $('div.font-semibold', recentObj).text().trim() ?? '';
             const image = $('a img', recentObj).attr('src') ??
                 $('a img', recentObj).attr('data-src') ??
                 '';
@@ -1896,11 +1886,31 @@ class Parser {
         }
         recentSection.items = recent;
         sectionCallback(recentSection);
+        for (const recommendationObj of $('.glide__slide:not(.glide__slide--clone)').toArray()) {
+            const id = $('a', recommendationObj)
+                .attr('href')
+                ?.replace(/\/$/, '')
+                ?.split('/')
+                .slice(-2)[0] ?? '';
+            const title = $('.text-white', recommendationObj).text().trim() ?? '';
+            const image = $('source', recommendationObj).first().attr('srcset') ??
+                $('img', recommendationObj).attr('src') ??
+                '';
+            recommendation.push(App.createPartialSourceManga({
+                image,
+                title: this.decodeHTMLEntity(title),
+                mangaId: id,
+                subtitle: '',
+            }));
+        }
+        recommendationSection.items = recommendation;
+        sectionCallback(recommendationSection);
     }
-    parseViewMore($) {
+    parseViewMore($, homepageSectionId) {
         const manga = [];
         const collectedIds = [];
-        for (const obj of $('article').toArray()) {
+        const selector = homepageSectionId === 'hot' ? 'article.flex' : 'article';
+        for (const obj of $(selector).toArray()) {
             const image = $('source', obj).attr('srcset') ?? '';
             const title = $('img', obj).attr('alt') ?? '';
             const id = $('a', obj)
@@ -1909,12 +1919,7 @@ class Parser {
                 ?.replace(/\/$/, '')
                 ?.split('/')
                 .slice(-2)[0] ?? '';
-            const getChapter = $('div.opacity-70', obj).first().text().trim();
-            const chapNumRegex = getChapter.match(/(\d+\.?\d?)+/);
-            let chapNum = 0;
-            if (chapNumRegex && chapNumRegex[1])
-                chapNum = Number(chapNumRegex[1]);
-            const subtitle = chapNum ? 'Chapter ' + chapNum : 'Chapter N/A';
+            const subtitle = $('div.opacity-70', obj).first().text().trim();
             if (!id || !title || collectedIds.includes(id))
                 continue;
             manga.push(App.createPartialSourceManga({
