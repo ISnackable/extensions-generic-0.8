@@ -1866,7 +1866,7 @@ class Parser {
         }
         hotSection.items = hot;
         sectionCallback(hotSection);
-        for (const recentObj of $('section.cols-span-1').toArray()) {
+        for (const recentObj of $('abbr.no-underline:has(a.aspect-square)').toArray()) {
             const id = $('a.aspect-square', recentObj)
                 .attr('href')
                 ?.replace(/\/$/, '')
