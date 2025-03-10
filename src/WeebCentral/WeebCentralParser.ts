@@ -63,7 +63,7 @@ export class Parser {
         return App.createSourceManga({
             id: mangaId,
             mangaInfo: App.createMangaInfo({
-                titles: [title],
+                titles: [this.decodeHTMLEntity(title)],
                 image,
                 rating: 0,
                 status,
@@ -214,14 +214,14 @@ export class Parser {
         const recommendationSection = App.createHomeSection({
             id: 'recommendation',
             title: 'Recommended Mangas',
-            type: HomeSectionType.featured,
+            type: HomeSectionType.singleRowNormal,
             containsMoreItems: false,
         })
         const hotSection = App.createHomeSection({
             id: 'hot',
             title: 'Hot Updates',
             type: HomeSectionType.singleRowNormal,
-            containsMoreItems: false,
+            containsMoreItems: true,
         })
 
         const recentSection = App.createHomeSection({
@@ -235,25 +235,6 @@ export class Parser {
         const hot: PartialSourceManga[] = []
         const recent: PartialSourceManga[] = []
 
-        for (const recommendationObj of $('glide__slide').toArray()) {
-            const id = $('a', recommendationObj).attr('href') ?? ''
-            const title =
-                $('.text-white', recommendationObj).text().trim() ?? ''
-            const image =
-                $('img', recommendationObj).attr('src') ??
-                $('img', recommendationObj).attr('data-src') ??
-                ''
-            recommendation.push(
-                App.createPartialSourceManga({
-                    image,
-                    title: this.decodeHTMLEntity(title),
-                    mangaId: id,
-                    subtitle: '',
-                })
-            )
-        }
-        recommendationSection.items = recommendation
-        sectionCallback(recommendationSection)
         for (const hotObj of $(
             'article.flex.gap-4',
             'section.bg-base-200.max-w-7xl'
@@ -291,7 +272,7 @@ export class Parser {
                     ?.replace(/\/$/, '')
                     ?.split('/')
                     .slice(-2)[0] ?? ''
-            const title = $('div.font-semibold', recentObj).first().text().trim() ?? ''
+            const title = $('div.font-semibold', recentObj).text().trim() ?? ''
             const image =
                 $('a img', recentObj).attr('src') ??
                 $('a img', recentObj).attr('data-src') ??
@@ -308,12 +289,44 @@ export class Parser {
         }
         recentSection.items = recent
         sectionCallback(recentSection)
+
+        for (const recommendationObj of $(
+            '.glide__slide:not(.glide__slide--clone)'
+        ).toArray()) {
+            const id =
+                $('a', recommendationObj)
+                    .attr('href')
+                    ?.replace(/\/$/, '')
+                    ?.split('/')
+                    .slice(-2)[0] ?? ''
+            const title =
+                $('.text-white', recommendationObj).text().trim() ?? ''
+            const image =
+                $('source', recommendationObj).first().attr('srcset') ??
+                $('img', recommendationObj).attr('src') ??
+                ''
+            recommendation.push(
+                App.createPartialSourceManga({
+                    image,
+                    title: this.decodeHTMLEntity(title),
+                    mangaId: id,
+                    subtitle: '',
+                })
+            )
+        }
+        recommendationSection.items = recommendation
+        sectionCallback(recommendationSection)
     }
 
-    parseViewMore($: cheerio.Root): PartialSourceManga[] {
+    parseViewMore(
+        $: cheerio.Root,
+        homepageSectionId: string
+    ): PartialSourceManga[] {
         const manga: PartialSourceManga[] = []
         const collectedIds: string[] = []
-        for (const obj of $('article').toArray()) {
+        const selector =
+            homepageSectionId === 'hot' ? 'article.flex' : 'article'
+        for (const obj of $(selector).toArray()) {
             const image: string = $('source', obj).attr('srcset') ?? ''
             const title: string = $('img', obj).attr('alt') ?? ''
             const id =
@@ -323,14 +336,7 @@ export class Parser {
                     ?.replace(/\/$/, '')
                     ?.split('/')
                     .slice(-2)[0] ?? ''
-            const getChapter = $('div.opacity-70', obj).first().text().trim()
-
-            const chapNumRegex = getChapter.match(/(\d+\.?\d?)+/)
-            let chapNum = 0
-            if (chapNumRegex && chapNumRegex[1])
-                chapNum = Number(chapNumRegex[1])
-
-            const subtitle = chapNum ? 'Chapter ' + chapNum : 'Chapter N/A'
+            const subtitle = $('div.opacity-70', obj).first().text().trim()
 
             if (!id || !title || collectedIds.includes(id)) continue
             manga.push(
