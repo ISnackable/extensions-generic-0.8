@@ -263,7 +263,7 @@ export class Parser {
         sectionCallback(hotSection)
 
         for (const recentObj of $(
-            'section.cols-span-1'
+            'abbr.no-underline:has(a.aspect-square)'
         ).toArray()) {
             const id =
                 $('a.aspect-square', recentObj)
